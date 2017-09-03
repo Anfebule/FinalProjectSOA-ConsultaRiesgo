@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jersey="http://www.mulesoft.org/schema/mule/jersey" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/jersey/current/mule-jersey.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8080" basePath="/creditAgencyService" doc:name="HTTP Listener Configuration"/>
+    <db:mysql-config name="MySQL_Configuration" host="192.99.73.159" port="3306" user="usrbanco" password="usrbanco" database="banco_riesgos" doc:name="MySQL Configuration"/>
+    <object-to-string-transformer name="Object_to_String" doc:name="Object to String"/>
+    <flow name="consultaelriesgodetuclienteFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/creditProfile" allowedMethods="POST" doc:name="HTTP"/>
+        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <logger message="Datos #[payload]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="TipoDocumento" value="#[payload.Cliente.tipoIdentificacion]" doc:name="Tipo Documento Variable"/>
+        <set-variable variableName="Identificacion" value="#[payload.Cliente.numeroIdentificacion]" doc:name="Identificacion Variable"/>
+        <db:select config-ref="MySQL_Configuration" doc:name="Informacion Riesgo Database">
+            <db:parameterized-query><![CDATA[SELECT puntaje, edad_historial FROM datos_clientes WHERE tipo =  #[flowVars.TipoDocumento] AND identificacion = #[flowVars.Identificacion]]]></db:parameterized-query>
+        </db:select>
+        <expression-transformer doc:name="Expression" expression="#[['CreditProfile':['CreditHistoryLegth':payload[0].edad_historial,'CreditScore':payload[0].puntaje]]]" />
+        <json:object-to-json-transformer doc:name="Object to JSON" mimeType="text/json"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
