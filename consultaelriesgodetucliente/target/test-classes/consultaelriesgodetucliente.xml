@@ -23,6 +23,9 @@ http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/j
         <db:select config-ref="MySQL_Configuration" doc:name="Informacion Riesgo Database">
             <db:parameterized-query><![CDATA[SELECT puntaje, edad_historial FROM datos_clientes WHERE tipo =  #[flowVars.TipoDocumento] AND identificacion = #[flowVars.Identificacion]]]></db:parameterized-query>
         </db:select>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="payloadVar" value="#[payload[0]]" doc:name="Variable payloadVar"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
         <expression-transformer expression="#[['CreditProfile':['CreditHistoryLegth':payload[0].edad_historial,'CreditScore':payload[0].puntaje]]]" doc:name="Expression"/>
         <json:object-to-json-transformer doc:name="Object to JSON" mimeType="text/json"/>
         <logger message="#[payload]" level="INFO" doc:name="Logger"/>
